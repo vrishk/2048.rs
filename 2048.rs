@@ -57,35 +57,62 @@ impl Grid {
                 self.grid[j][self.dim-i-1] = self.grid[self.dim-i-1][self.dim-j-1];
                 self.grid[self.dim-i-1][self.dim-j-1] = self.grid[self.dim-j-1][i];
                 self.grid[self.dim-j-1][i] = temp;
-                
+
             }
         }
     }
 
     fn slide(&mut self) {
+        
         for i in 0..self.dim {
+            
+            let mut j: usize = 0;
+            while j < self.grid[i].len() {
+                if self.grid[i][j] == 0 {
+                    self.grid[i].remove(j);
+                } else { j += 1; }
+            }
+
             let mut j: usize = 0;
 
-            while j < self.dim && self.grid[i][j] == 0 {
-                self.grid[i].remove(j);
+            while j+1 < self.grid[i].len() {
+                if self.grid[i][j] == self.grid[i][j+1] {
+                    self.grid[i][j] *= 2;
+                    self.grid[i].remove(j+1);
+                } else { j += 1; }
+            }
+            for _ in 0..(self.dim - self.grid[i].len()) {
                 self.grid[i].push(0);
-                j += 1;
-            }
-
-            let mut j: usize = 0;
-            let mut shift: usize = 0;
-
-            while j < self.dim - shift - 1 {
-                if self.grid[i][j-shift] == self.grid[i][j+1-shift] {
-                    self.grid[i][j-shift] *= 2;
-                    shift += 1;
-                }
-                j += 1;
-            }
-            for j in 0..shift {
-                self.grid[i][self.dim-j-1] = 0;
             }
         }
+    }
+
+    fn up(&mut self) {
+        self.rotate();
+        self.slide();
+        self.rotate();
+        self.rotate();
+        self.rotate();
+    }
+    
+    fn down(&mut self) {
+        self.rotate();
+        self.rotate();
+        self.rotate();
+        self.slide();
+        self.rotate();
+    }
+
+    fn right(&mut self) {
+        self.rotate();
+        self.rotate();
+        self.slide();
+        self.rotate();
+        self.rotate();
+    }
+
+    fn left(&mut self) {
+        self.slide();
     }
 }
 
@@ -143,11 +170,21 @@ impl fmt::Display for Grid {
 
 fn main() {
     let mut grid = Grid::new(N);
-    println!("{}", grid);
+
+    println!("ORIGINAL: \n{}", grid);
 
     let mut inp = String::new();
     io::stdin().read_line(&mut inp).expect("ERROR: Improper input.");
     
-    grid.slide();
-    println!("{}", grid);
+    grid.up();
+    println!("UP: \n{}", grid);
+    
+    grid.down();
+    println!("DOWN: \n{}", grid);
+
+    grid.right();
+    println!("RIGHT: \n{}", grid);
+
+    grid.left();
+    println!("LEFT: \n{}", grid);
 }
