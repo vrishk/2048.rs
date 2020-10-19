@@ -118,8 +118,8 @@ impl Grid {
 
 impl fmt::Display for Grid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // let mut res: String = "\u{001b}[H".to_string();
-        let mut res: String = "".to_string();
+        let mut res: String = "\u{001b}[H".to_string();
+        // let mut res: String = "".to_string();
         for j in 0..self.grid.len() {
             for i in 0..self.grid[j].len() {
                 res = [
@@ -171,20 +171,17 @@ impl fmt::Display for Grid {
 fn main() {
     let mut grid = Grid::new(N);
 
-    println!("ORIGINAL: \n{}", grid);
-
-    let mut inp = String::new();
-    io::stdin().read_line(&mut inp).expect("ERROR: Improper input.");
-    
-    grid.up();
-    println!("UP: \n{}", grid);
-    
-    grid.down();
-    println!("DOWN: \n{}", grid);
-
-    grid.right();
-    println!("RIGHT: \n{}", grid);
-
-    grid.left();
-    println!("LEFT: \n{}", grid);
+    loop {
+        println!("{}", grid);
+        let mut inp = String::new();
+        io::stdin().read_line(&mut inp).expect("ERROR: Improper input.");
+        match inp.as_str() {
+            "w\n" => grid.up(),
+            "s\n" => grid.down(),
+            "a\n" => grid.left(),
+            "d\n" => grid.right(),
+            "q\n" => break,
+            _ => println!("Invalid Input"),
+        };
+    }
 }
