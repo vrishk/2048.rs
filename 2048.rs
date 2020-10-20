@@ -5,12 +5,12 @@ use std::time::SystemTime;
 // SECTION: Constants
 
 const N: usize = 4;
-const START_NUM: i32 = 3;
+const START_NUM: i32 = 1;
 
 // SECTION: Helper Functions
 
 // Hue Angle defined by value
-fn get_color(n: u32) -> String {
+fn get_color(_n: u32) -> String {
     
     "\u{001b}[48;2;0;0;125m".to_string()
 }
@@ -37,27 +37,37 @@ struct Grid {
 
 impl Grid {
     fn new(dim: usize) -> Self {
-        let mut grid = vec![vec![0; dim]; dim];
-        
+        let mut grid = Grid {
+            dim: dim, 
+            grid: vec![vec![0; dim]; dim]
+        };
+
         for _ in 0..START_NUM {
-            let x = random() % 4;
-            let y = random() % 4;
-            grid[x][y] = 2;
+            grid.add();   
         }
 
-        Grid {dim: dim, grid: grid}
+        grid
+    }
+
+    fn add(&mut self) {
+        loop {
+            let x = random() % self.dim;
+            let y = random() % self.dim;
+            if self.grid[x][y] == 0 {
+                self.grid[x][y] = 2;
+                break;
+            }
+        }
     }
 
     fn rotate(&mut self) {
         for i in 0..self.dim/2 {
             for j in i..(self.dim-i-1) {
-
                 let temp = self.grid[i][j];
                 self.grid[i][j] = self.grid[j][self.dim-i-1];
                 self.grid[j][self.dim-i-1] = self.grid[self.dim-i-1][self.dim-j-1];
                 self.grid[self.dim-i-1][self.dim-j-1] = self.grid[self.dim-j-1][i];
                 self.grid[self.dim-j-1][i] = temp;
-
             }
         }
     }
@@ -143,7 +153,7 @@ impl fmt::Display for Grid {
                     format!(
                         "{}{}{}{}\u{001b}[0m", 
                         get_color(self.grid[j][i]),
-                        " ".repeat(3),
+                        " ".repeat(4-val.len()),
                         val,
                         " ".repeat(3)
                     )
@@ -162,7 +172,7 @@ impl fmt::Display for Grid {
             }
             res += "\n";
         }
-        writeln!(f, "{}", res)
+        write!(f, "{}", res)
     }
 }
 
@@ -172,6 +182,7 @@ fn main() {
     let mut grid = Grid::new(N);
 
     loop {
+        grid.add();
         println!("{}", grid);
         let mut inp = String::new();
         io::stdin().read_line(&mut inp).expect("ERROR: Improper input.");
