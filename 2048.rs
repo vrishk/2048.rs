@@ -1,3 +1,4 @@
+use std::cmp::{max, min};
 use std::fmt;
 use std::io;
 use std::time::SystemTime;
@@ -9,9 +10,36 @@ const START_NUM: i32 = 1;
 
 // SECTION: Helper Functions
 
+fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+    let fmod = |n: f32, d: i32| {
+        let r = (n / d as f32) as i32;
+        n - (r * d) as f32
+    };
+
+    let f = |n: f32| -> u8 {
+        let k = fmod(n + h / 60.0, 6);
+        let mut sc = if k > 4.0 - k { 4.0 - k } else { k };
+        if sc > 1.0 {
+            sc = 1.0
+        };
+        if sc < 0.0 {
+            sc = 0.0
+        };
+
+        ((v - v * s * sc) * 256.0) as u8
+    };
+
+    (f(5.0), f(3.0), f(1.0))
+}
+
 // Hue Angle defined by value
-fn get_color(_n: u32) -> String {
-    "\u{001b}[48;2;0;0;125m".to_string()
+fn get_color(n: u32) -> String {
+    if n > 0 {
+        let col = hsv_to_rgb((n as f32) * 360.0 / 128.0, 1.0, 0.6);
+        format!("\u{001b}[48;2;{};{};{}m", col.0, col.1, col.2)
+    } else {
+        "\u{001b}[48;2;0;0;125m".to_string()
+    }
 }
 
 // XORShift RNG
@@ -190,7 +218,7 @@ fn main() {
             "a\n" => grid.left(),
             "d\n" => grid.right(),
             "q\n" => break,
-            _ => println!("Invalid Input"),
+            _ => print!("Invalid Input"),
         };
     }
 }
