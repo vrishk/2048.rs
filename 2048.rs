@@ -35,10 +35,10 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
 // Hue Angle defined by value
 fn get_color(n: u32) -> String {
     if n > 0 {
-        let col = hsv_to_rgb((n as f32) * 360.0 / 128.0, 1.0, 0.6);
-        format!("\u{001b}[48;2;{};{};{}m", col.0, col.1, col.2)
+        let col = hsv_to_rgb((n as f32).ln() * 180.0 / 10.0, 0.9, 0.6);
+        format!("\u{001b}[48;2;{};{};{}m\u{001b}[37m", col.0, col.1, col.2)
     } else {
-        "\u{001b}[48;2;0;0;125m".to_string()
+        "\u{001b}[48;2;26;77;151m".to_string()
     }
 }
 
@@ -157,7 +157,7 @@ impl Grid {
 
 impl fmt::Display for Grid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut res: String = "\u{001b}[H".to_string();
+        let mut res: String = "\u{001b}[2J\u{001b}[1;1H".to_string();
         // let mut res: String = "".to_string();
         for j in 0..self.grid.len() {
             for i in 0..self.grid[j].len() {
@@ -179,9 +179,9 @@ impl fmt::Display for Grid {
                     format!(
                         "{}{}{}{}\u{001b}[0m",
                         get_color(self.grid[j][i]),
-                        " ".repeat(4 - val.len()),
+                        " ".repeat(4 - (val.len() + 1) / 2),
                         val,
-                        " ".repeat(3)
+                        " ".repeat(3 - val.len() + (val.len() + 1) / 2)
                     ),
                 ]
                 .join("");
