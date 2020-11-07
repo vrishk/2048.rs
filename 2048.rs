@@ -1,4 +1,3 @@
-use std::cmp::{max, min};
 use std::fmt;
 use std::io;
 use std::time::SystemTime;
@@ -6,7 +5,7 @@ use std::time::SystemTime;
 // SECTION: Constants
 
 const N: usize = 4;
-const START_NUM: i32 = 1;
+const START_NUM: i32 = 2;
 
 // SECTION: Helper Functions
 
@@ -56,10 +55,12 @@ fn random() -> usize {
 
 // SECTION: Main Struct
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Grid {
     dim: usize,
     grid: Vec<Vec<u32>>,
+    score: u32,
+    check: (bool, bool, bool, bool),
 }
 
 impl Grid {
@@ -67,11 +68,15 @@ impl Grid {
         let mut grid = Grid {
             dim: dim,
             grid: vec![vec![0; dim]; dim],
+            score: 0,
+            check: (true, true, true, true),
         };
 
         for _ in 0..START_NUM {
             grid.add();
         }
+
+        grid.check_moves();
 
         grid
     }
@@ -126,32 +131,76 @@ impl Grid {
         }
     }
 
-    fn up(&mut self) {
-        self.rotate();
-        self.slide();
-        self.rotate();
-        self.rotate();
-        self.rotate();
+    fn left(&mut self, check: bool) {
+        if check || self.check.0 {
+            self.slide();
+
+            if !check {
+                self.add();
+            }
+        }
     }
 
-    fn down(&mut self) {
-        self.rotate();
-        self.rotate();
-        self.rotate();
-        self.slide();
-        self.rotate();
+    fn right(&mut self, check: bool) {
+        if check || self.check.1 {
+            self.rotate();
+            self.rotate();
+            self.slide();
+            self.rotate();
+            self.rotate();
+
+            if !check {
+                self.add();
+            }
+        }
     }
 
-    fn right(&mut self) {
-        self.rotate();
-        self.rotate();
-        self.slide();
-        self.rotate();
-        self.rotate();
+    fn up(&mut self, check: bool) {
+        if check || self.check.2 {
+            self.rotate();
+            self.slide();
+            self.rotate();
+            self.rotate();
+            self.rotate();
+
+            if !check {
+                self.add();
+            }
+        }
     }
 
-    fn left(&mut self) {
-        self.slide();
+    fn down(&mut self, check: bool) {
+        if check || self.check.3 {
+            self.rotate();
+            self.rotate();
+            self.rotate();
+            self.slide();
+            self.rotate();
+
+            if !check {
+                self.add();
+            }
+        }
+    }
+
+    fn check_moves(&mut self) {
+        let mut grid: Grid = self.clone();
+        grid.left(true);
+        let l = self.grid != grid.grid;
+
+        let mut grid: Grid = self.clone();
+        grid.right(true);
+        let r = self.grid != grid.grid;
+
+        let mut grid: Grid = self.clone();
+        grid.up(true);
+        let u = self.grid != grid.grid;
+
+        let mut grid: Grid = self.clone();
+        grid.down(true);
+        let d = self.grid != grid.grid;
+
+        self.check = (l, r, u, d);
     }
 }
 
@@ -206,17 +255,20 @@ fn main() {
     let mut grid = Grid::new(N);
 
     loop {
-        grid.add();
+        grid.check_moves();
+
         println!("{}", grid);
+
         let mut inp = String::new();
         io::stdin()
             .read_line(&mut inp)
             .expect("ERROR: Improper input.");
+
         match inp.as_str() {
-            "w\n" => grid.up(),
-            "s\n" => grid.down(),
-            "a\n" => grid.left(),
-            "d\n" => grid.right(),
+            "w\n" => grid.up(false),
+            "s\n" => grid.down(false),
+            "a\n" => grid.left(false),
+            "d\n" => grid.right(false),
             "q\n" => break,
             _ => print!("Invalid Input"),
         };
