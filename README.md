@@ -2,6 +2,9 @@
 
 2048 in the console with Rust. 
 
+![Example](example.png)
+
+
 # Requirements
 - `rustc` compiler
 
