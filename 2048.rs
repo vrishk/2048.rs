@@ -1,11 +1,13 @@
 use std::fmt;
 use std::io;
-use std::time::SystemTime;
+use std::{thread, time};
 
 // SECTION: Constants
 
 const N: usize = 4;
 const START_NUM: i32 = 2;
+const ANIM_DELAY: time::Duration = time::Duration::from_millis(70);
+const NEW_ADD: u32 = 3;
 
 // SECTION: Helper Functions
 
@@ -43,8 +45,8 @@ fn get_color(n: u32) -> String {
 
 // XORShift RNG
 fn random() -> usize {
-    let mut r = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
+    let mut r = time::SystemTime::now()
+        .duration_since(time::SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_micros() as u32;
     r ^= r << 13;
@@ -73,7 +75,14 @@ impl Grid {
         };
 
         for _ in 0..START_NUM {
-            grid.add();
+            loop {
+                let x = random() % grid.dim;
+                let y = random() % grid.dim;
+                if grid.grid[x][y] == 0 {
+                    grid.grid[x][y] = 2;
+                    break;
+                }
+            }
         }
 
         grid.check_moves();
@@ -82,11 +91,25 @@ impl Grid {
     }
 
     fn add(&mut self) {
+        let mut min: u32 = 0;
+        for i in 0..self.dim {
+            for j in 0..self.dim {
+                if self.grid[i][j] < min {
+                    min = self.grid[i][j];
+                }
+            }
+        }
+
         loop {
             let x = random() % self.dim;
             let y = random() % self.dim;
             if self.grid[x][y] == 0 {
-                self.grid[x][y] = 2;
+                thread::sleep(ANIM_DELAY);
+                self.grid[x][y] = if min / 2u32.pow(NEW_ADD) > 1 {
+                    min / 2u32.pow(NEW_ADD)
+                } else {
+                    2
+                };
                 break;
             }
         }
@@ -120,6 +143,7 @@ impl Grid {
             while j + 1 < self.grid[i].len() {
                 if self.grid[i][j] == self.grid[i][j + 1] {
                     self.grid[i][j] *= 2;
+                    self.score += self.grid[i][j];
                     self.grid[i].remove(j + 1);
                 } else {
                     j += 1;
@@ -208,6 +232,18 @@ impl fmt::Display for Grid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut res: String = "\u{001b}[2J\u{001b}[1;1H".to_string();
         // let mut res: String = "".to_string();
+
+        res = [
+            res,
+            format!(
+                "2048.rs{}{} pts",
+                " ".repeat(7 * self.dim - 11 - self.score.to_string().len()),
+                self.score
+            ),
+        ]
+        .join("");
+        res += "\n\n";
+
         for j in 0..self.grid.len() {
             for i in 0..self.grid[j].len() {
                 res = [
@@ -263,6 +299,8 @@ fn main() {
         io::stdin()
             .read_line(&mut inp)
             .expect("ERROR: Improper input.");
+
+        println!("{}", grid);
 
         match inp.as_str() {
             "w\n" => grid.up(false),
