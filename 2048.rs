@@ -6,8 +6,8 @@ use std::{thread, time};
 
 const N: usize = 4;
 const START_NUM: i32 = 2;
-const ANIM_DELAY: time::Duration = time::Duration::from_millis(70);
-const NEW_ADD: u32 = 3;
+const ANIM_DELAY: time::Duration = time::Duration::from_millis(100);
+const NEW_ADD: u32 = 5;
 
 // SECTION: Helper Functions
 
@@ -62,7 +62,6 @@ struct Grid {
     dim: usize,
     grid: Vec<Vec<u32>>,
     score: u32,
-    check: (bool, bool, bool, bool),
 }
 
 impl Grid {
@@ -71,7 +70,6 @@ impl Grid {
             dim: dim,
             grid: vec![vec![0; dim]; dim],
             score: 0,
-            check: (true, true, true, true),
         };
 
         for _ in 0..START_NUM {
@@ -85,32 +83,32 @@ impl Grid {
             }
         }
 
-        grid.check_moves();
-
         grid
     }
 
-    fn add(&mut self) {
-        let mut min: u32 = 0;
-        for i in 0..self.dim {
-            for j in 0..self.dim {
-                if self.grid[i][j] < min {
-                    min = self.grid[i][j];
+    fn add(&mut self, valid: bool) {
+        if valid {
+            let mut max: u32 = 0;
+            for i in 0..self.dim {
+                for j in 0..self.dim {
+                    if self.grid[i][j] < max {
+                        max = self.grid[i][j];
+                    }
                 }
             }
-        }
 
-        loop {
-            let x = random() % self.dim;
-            let y = random() % self.dim;
-            if self.grid[x][y] == 0 {
-                thread::sleep(ANIM_DELAY);
-                self.grid[x][y] = if min / 2u32.pow(NEW_ADD) > 1 {
-                    min / 2u32.pow(NEW_ADD)
-                } else {
-                    2
-                };
-                break;
+            loop {
+                let x = random() % self.dim;
+                let y = random() % self.dim;
+                if self.grid[x][y] == 0 {
+                    thread::sleep(ANIM_DELAY);
+                    self.grid[x][y] = if max / 2u32.pow(NEW_ADD) > 1 {
+                        max / 2u32.pow(NEW_ADD)
+                    } else {
+                        2
+                    };
+                    break;
+                }
             }
         }
     }
@@ -155,76 +153,56 @@ impl Grid {
         }
     }
 
-    fn left(&mut self, check: bool) {
-        if check || self.check.0 {
-            self.slide();
-
-            if !check {
-                self.add();
-            }
-        }
+    fn left(&mut self) -> bool {
+        let grid: Grid = self.clone();
+        self.slide();
+        grid.grid != self.grid
     }
 
-    fn right(&mut self, check: bool) {
-        if check || self.check.1 {
-            self.rotate();
-            self.rotate();
-            self.slide();
-            self.rotate();
-            self.rotate();
-
-            if !check {
-                self.add();
-            }
-        }
+    fn right(&mut self) -> bool {
+        let grid: Grid = self.clone();
+        self.rotate();
+        self.rotate();
+        self.slide();
+        self.rotate();
+        self.rotate();
+        grid.grid != self.grid
     }
 
-    fn up(&mut self, check: bool) {
-        if check || self.check.2 {
-            self.rotate();
-            self.slide();
-            self.rotate();
-            self.rotate();
-            self.rotate();
-
-            if !check {
-                self.add();
-            }
-        }
+    fn up(&mut self) -> bool {
+        let grid: Grid = self.clone();
+        self.rotate();
+        self.slide();
+        self.rotate();
+        self.rotate();
+        self.rotate();
+        grid.grid != self.grid
     }
 
-    fn down(&mut self, check: bool) {
-        if check || self.check.3 {
-            self.rotate();
-            self.rotate();
-            self.rotate();
-            self.slide();
-            self.rotate();
-
-            if !check {
-                self.add();
-            }
-        }
+    fn down(&mut self) -> bool {
+        let grid: Grid = self.clone();
+        self.rotate();
+        self.rotate();
+        self.rotate();
+        self.slide();
+        self.rotate();
+        grid.grid != self.grid
     }
 
-    fn check_moves(&mut self) {
+    fn game_over(&mut self) -> bool {
         let mut grid: Grid = self.clone();
-        grid.left(true);
-        let l = self.grid != grid.grid;
+        let l = grid.left();
 
         let mut grid: Grid = self.clone();
-        grid.right(true);
-        let r = self.grid != grid.grid;
+        let r = grid.right();
 
         let mut grid: Grid = self.clone();
-        grid.up(true);
-        let u = self.grid != grid.grid;
+        let u = grid.up();
 
         let mut grid: Grid = self.clone();
-        grid.down(true);
-        let d = self.grid != grid.grid;
+        let d = grid.down();
 
-        self.check = (l, r, u, d);
+        !(l || r || u || d)
     }
 }
 
@@ -291,24 +269,28 @@ fn main() {
     let mut grid = Grid::new(N);
 
     loop {
-        grid.check_moves();
-
         println!("{}", grid);
+
+        if grid.game_over() {
+            println!("GAME OVER!");
+            break;
+        }
 
         let mut inp = String::new();
         io::stdin()
             .read_line(&mut inp)
             .expect("ERROR: Improper input.");
 
+        let valid: bool = match inp.as_str() {
+            "w\n" => grid.up(),
+            "s\n" => grid.down(),
+            "a\n" => grid.left(),
+            "d\n" => grid.right(),
+            "q\n" => break,
+            _ => false,
+        };
         println!("{}", grid);
 
-        match inp.as_str() {
-            "w\n" => grid.up(false),
-            "s\n" => grid.down(false),
-            "a\n" => grid.left(false),
-            "d\n" => grid.right(false),
-            "q\n" => break,
-            _ => print!("Invalid Input"),
-        };
+        grid.add(valid);
     }
 }
