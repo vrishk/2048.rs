@@ -244,7 +244,7 @@ impl fmt::Display for Grid {
                         get_color(self.grid[j][i]),
                         " ".repeat(4 - (val.len() + 1) / 2),
                         val,
-                        " ".repeat(3 - val.len() + (val.len() + 1) / 2)
+                        " ".repeat(3 + (val.len() + 1) / 2 - val.len())
                     ),
                 ]
                 .join("");
