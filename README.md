@@ -1,6 +1,6 @@
 # 2048.rs
 
-2048 in the console with Rust. 
+2048 in the console with Rust. Inspired from [2048.c](https://github.com/mevdschee/2048.c).
 
 ![Example](example.png)
 
